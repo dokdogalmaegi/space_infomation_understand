@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>박스 오피스 랭킹</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+</head>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; text-decoration: none; color: #333; }
+    ul, li { list-style: none; }
+    .header { height: 75px; border-bottom: 1px solid #000;}
+    .header h1 { margin: 25px 0 15px 20px;}
+    .content { width: 100%; height: 500px; }
+    #clock { border: 1px solid #dedede; width: 200px; height: 75px; line-height: 75px; color: #666; font-size: 30px; text-align: center; float: right; transition: .5s; }
+    #clock span { transition: .5s; }
+    #clock:hover { background: #666; color: #fff; }
+    #clock:hover span { color: #fff; }
+    .list-group-item:hover { background: #333; color: #fff;}
+</style>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><a href="/" style="text-decoration: none;" id="clock"></a></h1>
+        </div>
+        <div class="content">
+            <!-- <div id="clock"></div><div id="clock"></div> -->
+            <ul class="list-group">
+                
+            </ul>
+        </div>
+    </div>
+</body>
+<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+        var mytime;
+        var a = 0;
+        var date = new Date();
+        var ss = "";
+        var yy = date.getFullYear();
+        var mm = date.getMonth();
+        var dd = date.getDay();
+        var zz = "0";
+        var ss = "";
+        if(mm < 10) mm = zz + mm;
+        if(dd < 10) dd = zz + dd;
+        yy = ""+yy;
+        toDay = yy+mm+dd;
+        if( ! dd ) console.log(dd);
+        $(".list-group").append("<li class='list-group-item disabled aria-disabled='true''>" + yy + "년 " + date.getMonth() + "월 " + date.getDay() + "일 박스오피스 랭킹</li>")
+        var key = "0d9a758372af39d68c5beb3dbf8e7289";
+        var url = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
+        var cnt = 0;
+        var cont = 0;
+        var movieN = new Array();
+        $.ajax({
+            method: "GET",
+            url: url,
+            data: { key : key, targetDt: toDay }
+        }).done((res) => {
+            for(var i = 0; i < res.boxOfficeResult.dailyBoxOfficeList.length; i++){
+                movieN.push(res.boxOfficeResult.dailyBoxOfficeList[i].movieNm);
+                if( res.boxOfficeResult.dailyBoxOfficeList[i].rankOldAndNew == "NEW" ) var gang = res.boxOfficeResult.dailyBoxOfficeList[i].rankOldAndNew;
+                else var gang = "";
+                if( res.boxOfficeResult.dailyBoxOfficeList[i].openDt ) {
+                    var Dt = res.boxOfficeResult.dailyBoxOfficeList[i].openDt.split("-")
+                    // console.log(Dt);
+                }
+                $(".content").append("<li class='list-group-item'><span style='color:red;'>" + gang + "</span> " + res.boxOfficeResult.dailyBoxOfficeList[i].rank + "위 " + res.boxOfficeResult.dailyBoxOfficeList[i].movieNm + " (누적관객수 : " + res.boxOfficeResult.dailyBoxOfficeList[i].audiAcc + "), 개봉일 : " + Dt[0] + "년 " + Dt[1] + "월 " + Dt[2] + "일 / </li>")
+            }
+            var cntcnt = 0;
+            var playplay = setInterval(function() {
+                testtest();
+                cntcnt++;
+                if(cntcnt >= 10) clearInterval(playplay)
+            },1000)
+            playplay();
+        })
+        function testtest() {
+                console.log(movieN[cnt])
+                console.log(cnt)
+                $.ajax({
+                method: "GET",
+                url: "http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json",
+                data: { key: key, movieNm: movieN[cnt++] }
+            }).done((res) => {
+                console.log(res.movieListResult.movieList[0])
+                var color = "red"
+                if(res.movieListResult.movieList[0].genreAlt.indexOf('코미디') == -1 || res.movieListResult.movieList[0].genreAlt.indexOf('로맨스') == -1 ) color = "#333"
+                console.log(res.movieListResult.movieList[0].genreAlt.indexOf('코미디'))
+                $(".list-group-item").eq(++cont).append("장르 : <span style='color:" + color + "'>"+ res.movieListResult.movieList[0].genreAlt+"</span>")
+            })
+    }   
+        printClock();
+        $(".header > h1 > a").on("mouseenter", function(){
+            clearTimeout(mytime);
+            $(".header>h1>a").text("관광정보")
+        }).on("mouseleave", function(){
+            $(".header>h1>a").text("")
+            $(".header>h1>a").attr('id', 'clock')
+            printClock();
+        })
+            function printClock() {
+                var clock = document.getElementById("clock");            // 출력할 장소 선택
+                var currentDate = new Date();                                     // 현재시간
+                var calendar = currentDate.getFullYear() + "-" + (currentDate.getMonth() + 1) + "-" + currentDate.getDate() // 현재 날짜
+                var amPm = 'AM'; // 초기값 AM
+                var currentHours = addZeros(currentDate.getHours(), 2);
+                var currentMinute = addZeros(currentDate.getMinutes(), 2);
+                var currentSeconds = addZeros(currentDate.getSeconds(), 2);
+
+                if (currentHours >= 12) { // 시간이 12보다 클 때 PM으로 세팅, 12를 빼줌
+                    amPm = 'PM';
+                    currentHours = addZeros(currentHours - 12, 2);
+                }
+                clock.innerHTML = currentHours + ":" + currentMinute + ":" + currentSeconds + " <span style='font-size:25px;'>" + amPm + "</span>"; //날짜를 출력해 줌
+
+                mytime = setTimeout("printClock()", 1000);         // 1초마다 printClock() 함수 호출
+            }
+
+            function addZeros(num, digit) { // 자릿수 맞춰주기
+                var zero = '';
+                num = num.toString();
+                if (num.length < digit) {
+                    for (i = 0; i < digit - num.length; i++) {
+                        zero += '0';
+                    }
+                }
+                return zero + num;
+            }
+
+        // function translate()  // 버튼을 눌렀을 때 작동할 함수
+        // {
+            // var Val = $("#input").val();
+            // var Rval = $("#result").val();
+            // var Ilang = $("#TraI").val();
+            // var Rlang = $("#TraR").val();
+            // var text = document.getElementById("input").value;  // div#body 안에 있는 내용을 text 변수에 저장
+            // google.language.translate(text, Ilang ,Rlang,function(result){
+                // document.getElementById("result").value=result.translation; // 번역기 요청후, 결과를 #caption에 보여주기.
+            // });
+        // }
+        // google.load("language","1"); // 구글 번역기 로딩.
+        // var btn = document.querySelector("#button");
+        // btn.addEventListener("click",function(e){
+            // e.preventDefault();
+            // translate();
+            // TSL();
+        // })
+        // function TSL() {
+		// 	var url = 'https://kapi.kakao.com/v1/translation/translate'; /*URL*/
+		// 	var queryParams = '?' + encodeURIComponent('src_lang') + '=' + "동해물과"; /*Service Key*/
+        //     queryParams += '$' + encodeURIComponent('src_lang') + '=' + "kr";
+        //     queryParams += '$' + encodeURIComponent('target_lang') + '=' + "en";
+        //     url = url + queryParams;
+        //     $.ajax({
+        //         method: "GET",
+        //         url: url,
+        //         headers: {Authorization: "KakaoAK 08be4b67f926baf5bea639025a29dd97" },
+        //         success: (res) => {
+        //             console.log("성공!")
+        //         },
+        //         error: (error) => {
+        //             console.log(error)
+        //         }
+        //     })
+        // }
+        // function translate() {
+        //     var url = "https://kapi.kakao.com/v1/translation/translate"
+            // var Val = $("#input").val();
+            // var Rval = $("#result").val();
+            // var Ilang = $("#TraI").val();
+            // var Rlang = $("#TraR").val();
+        //     $.ajax({
+        //         method: "GET",
+        //         url: url,
+        //         data: { src_lang: "kr", target_lang: "en", query: "동해물과" },
+        //         headers: {Authorization: "KakaoAK 08be4b67f926baf5bea639025a29dd97" }
+        //     }).done((res) => {
+        //         console.log(res)
+        //     })
+        // }
+    </script>
+</html>

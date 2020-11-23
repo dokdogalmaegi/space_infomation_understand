@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>이미지 검색</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; text-decoration: none; color: #333; box-sizing: border-box; }
+        ul, li { list-style: none; }
+        .wrap { width: 1000px; background: black; margin: 0 auto; text-align: center; }
+        .header { width: 110%; height: 40px; display: flex; transition: .5s; }
+        .BN { width: 60%; font-size: 30px;  }
+        .header button { width: 13%; height: 100%; font-size: 20px; }
+        .header > a { text-decoration: none; color: white; }
+        #SEL { width: 10%; height: 100%; font-size: 18px; }
+        .imgBox a { width: 130px; height: 130px; display: inline-block; margin: 30px 0 0 10px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="header">
+            <a href="/" class="btn btn-success">관광정보</a>
+            <input type="text" class="BN">
+            <button onclick="search()">검색</button>
+            <select name="SEL" id="SEL">
+                <option value="1">정확도순</option>
+                <option value="2">최신순</option>
+            </select>
+        </header>
+        <div class="imgBox">
+        </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+        $(".BN").keydown(function (key) {
+                if (key.keyCode == 13) {
+                    search();
+                }
+            });
+        function search() {
+            $(".imgBox a").remove();
+            var Val = $(".BN").val();
+            var SV = $("#SEL").val();
+            var Sort = "accuracy";
+            if ( SV == 1 ) {
+                Sort = "accuracy"
+            }else if ( SV == 2 ) {
+                Sort = "recency"
+            }
+            $.ajax({
+                method: "GET",
+                url: "https://dapi.kakao.com/v2/search/image",
+                data: { query: Val, sort: Sort, size: 80 },
+                headers: {Authorization: "KakaoAK 08be4b67f926baf5bea639025a29dd97" }
+            }).done((res) => {
+                for(var i = 0; i < res.documents.length; i++) {
+                    $(".imgBox").append("<a href='"+ res.documents[i].image_url +"' target='_blank'><img src='"+ res.documents[i].thumbnail_url +"' alt='"+ res.documents[i].thumbnail_url +"'></a>");
+                    // console.log(res.documents[i].thumbnail_url)
+                    // console.log(res.documents[i].image_url)
+                }
+            })
+        }
+    </script>
+</body>
+</html>

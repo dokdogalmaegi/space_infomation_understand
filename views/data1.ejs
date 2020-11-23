@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>관광정보</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+		#photos {
+			width: 700px;
+			height: 700px;
+			position: absolute;
+			overflow-y: scroll;
+			border: 5px solid #ccc;
+			background-color: #fff;
+			display: none;
+		}
+		#photos img { max-width: 100%; }
+        form { height: 30px; font-size: 20px; line-height: 30px; text-align: center; margin: 5px 0; }
+        tr:nth-child(odd) { background: #eee; }
+        tr { border-bottom: 1px solid #000; }
+		td { font-size: 12px; }
+		.lead > button { width: 12%; height: 30px; font-size: 13px; text-align: center; border-radius: 15px; background: #fff; float: left; margin-right: 30px; transition: .5s; line-height: 30px; }
+		.lead > button:hover { color: #fff; background: #343a40; }
+		form button:focus { outline: none; }
+		.jumbotron h1 {
+			text-shadow: 1px 1px 1px #fff;
+		}
+		#test { text-align: center; }
+		.colorB { text-align: center; }
+		@media screen and (max-width: 1368px) {
+			.jumbotron button { width: 15%; height: 30px; font-size: 5px; }
+			.row { font-size: 2px; }
+		}
+	</style>
+</head>
+<body>
+	<div class="container-fluid">
+		<div class="jumbotron">
+			<h1>공공 API 관광정보</h1>
+			<form class="lead">
+				<button onclick="window.open('data2')">이미지 검색하러 가기</button>
+				<button onclick="window.open('data3')">박스오피스 랭킹 보러 가기</button>
+			</form>
+		</div>
+		<div class="row">
+			<div class="col-sm-2">
+					<form onsubmit="return false;">
+						<div class="form-group row">
+							<select id="sido" class="form-control col-sm-6"></select>
+							<select id="gugun" class="form-control col-sm-6"></select>
+						</div>			
+						</form>
+						<div id="map"></div>
+			</div>
+			<div class="col-sm-10">
+				<div id="infolist">
+					<table class="table">
+						<thead class="thead-dark">
+							<tr id="test">
+								<th>이름</th>
+								<th>주소</th>
+								<th>연락처</th>
+								<th>위치</th>
+								<th>이미지</th>
+								<th>홈페이지</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>					
+			</div>
+		</div>
+	</div>
+	
+	
+	<div id="photos"></div>
+	
+	<script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script>
+		// $("#map").loac("images/southKoreaLow.svg")
+
+		var serviceKey = "aImTjf1DEi1Qvanrayuy6CMD3jtXpChZNa4XvJuYjDFt0qKJKnoEEKcBCN6ffTW3tfNiU9x8QCP%2BQcGjm2Ls%2Bw%3D%3D";
+
+		getArea("sido","");
+
+		function getArea(sid, acode) {
+			var sid = sid || "";
+			if( ! sid ) return;
+			var acode = acode || "";
+			var url = 'http://api.visitkorea.or.kr/openapi/service/rest/KorService/areaCode'; /*URL*/
+			var queryParams = '?' + encodeURIComponent('ServiceKey') + '=' + serviceKey; /*Service Key*/
+			queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('100');
+			queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+			queryParams += '&' + encodeURIComponent('MobileOS') + '=' + encodeURIComponent('ETC');
+			queryParams += '&' + encodeURIComponent('MobileApp') + '=' + encodeURIComponent('AppTest');
+			queryParams += '&' + encodeURIComponent('_type') + '=' + encodeURIComponent('json');
+			queryParams += '&' + encodeURIComponent('areaCode') + '=' + encodeURIComponent(acode);
+
+			$.getJSON(url + queryParams, function(res){
+				var sidojson = res.response.body.items.item;
+				// console.log(sidojson);
+				var options = "<option>::선택::</option>";
+				for(var i=0; i<sidojson.length; i++) {
+					options += `<option value='${sidojson[i].code}'>
+												${sidojson[i].name}
+											</option>`;
+				}
+				$("#"+sid).html(options);
+			});
+		}
+
+		$("#sido").change(function(){
+			var code = $(this).val();
+			$("#gugun").html("");
+			if( ! code ) return;
+			getArea("gugun",code);
+		});
+
+		$("#gugun").change(function(){
+			var code = $(this).val();
+			if( ! code ) return;
+			showInfo(code);
+		});		
+        
+		function showInfo(code){
+			if( ! code ) return;
+			var sidocode = $("#sido").val();
+			var guguncode = code;
+			var url = "http://api.visitkorea.or.kr/openapi/service/rest/KorService/areaBasedList";
+			var queryParams = '?' + encodeURIComponent('ServiceKey') + '=' + serviceKey; /*Service Key*/
+			queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('100');
+			queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+			queryParams += '&' + encodeURIComponent('MobileOS') + '=' + encodeURIComponent('ETC');
+			queryParams += '&' + encodeURIComponent('MobileApp') + '=' + encodeURIComponent('AppTest');
+			queryParams += '&' + encodeURIComponent('_type') + '=' + encodeURIComponent('json');
+			queryParams += '&' + encodeURIComponent('areaCode') + '=' + encodeURIComponent(sidocode);
+			queryParams += '&' + encodeURIComponent('sigunguCode') + '=' + encodeURIComponent(guguncode);
+			queryParams += '&' + encodeURIComponent('listYN') + '=' + encodeURIComponent('Y');
+			queryParams += '&' + encodeURIComponent('arrange') + '=' + encodeURIComponent('A');
+
+			$.getJSON(url + queryParams, function(res){
+				var info = res.response.body.items.item;
+				// console.log(info);
+				$("#infolist table tbody").html("");
+				if( ! info.length ) return;
+				for( var i=0; i<info.length; i++ ) {
+					var tel = info[i].tel || "전화번호가 없습니다.";
+					var addr1 = info[i].addr1 || "";
+					var addr2 = info[i].addr2 || "";
+					var tr = `
+						<tr class='colorB'>
+							<td>${info[i].title}</td>
+							<td>
+								${info[i].zipcode}) 
+								${addr1} ${addr2}
+							</td>
+							<td>${tel}</td>
+							<td>
+								<a class='map' href='#!' data-x='${info[i].mapx}' data-y='${info[i].mapy}'>지도</a>
+							</td>
+							<td>
+								<a class='img' href='#!' data-id='${info[i].contentid}'>이미지</a>
+							</td>
+                            <td>
+                                <a class='page' href='#!' data-id='${info[i].contentid}' id="url-{${info[i].contentid}}">홈페이지</a>
+                            </td>
+						</tr>
+					`;
+					$("#infolist table tbody").append(tr);
+				}
+			});
+
+		}
+
+		$("#infolist table tbody").on("click", "a.map", function(){
+			var x = $(this).attr("data-x");
+			var y = $(this).attr("data-y");
+			if( ! x || ! y ) return;
+			var map = `https://www.google.com/maps/@${y},${x},15z?hl=ko`;
+			window.open(map);
+		});
+
+		$("#infolist table tbody").on("click", "a.img", function(){
+			var contentid = $(this).attr("data-id");
+			if( ! contentid ) return;
+			viewImage(contentid);
+		});
+        $("#infolist table tbody").on("click", "a.page", function(){
+            var contentid = $(this).attr("data-id");
+            if( ! contentid ) return;
+            viewPage(contentid)
+        })
+
+		function viewImage(contentid){
+			$("#photos").html("");
+			var url = "http://api.visitkorea.or.kr/openapi/service/rest/KorService/detailImage";
+			var queryParams = '?' + encodeURIComponent('ServiceKey') + '=' + serviceKey; /*Service Key*/
+			queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('100');
+			queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+			queryParams += '&' + encodeURIComponent('MobileOS') + '=' + encodeURIComponent('ETC');
+			queryParams += '&' + encodeURIComponent('MobileApp') + '=' + encodeURIComponent('AppTest');
+			queryParams += '&' + encodeURIComponent('_type') + '=' + encodeURIComponent('json');
+			queryParams += '&' + encodeURIComponent('contentId') + '=' + encodeURIComponent(contentid);
+			queryParams += '&' + encodeURIComponent('imageYN') + '=' + encodeURIComponent('Y');
+			queryParams += '&' + encodeURIComponent('subImageYN') + '=' + encodeURIComponent('Y');
+			$.getJSON(url + queryParams, function(res){
+				var imgs = res.response.body.items.item;
+				if( ! imgs ) alert("이미지가 없습니다.");
+				for(var i=0; i<imgs.length; i++) {
+					var imgurl = imgs[i].originimgurl || "";
+					if( imgurl ) {
+						var photo = `<img src='${imgurl}' alt='${imgurl}'>`;
+						$("#photos").append(photo);
+					}
+				}	
+				var obj = $("#photos");
+				obj.css("top", Math.max(0, (($(window).height() - obj.outerHeight()) / 2) + $(window).scrollTop()) + "px");
+				obj.css("left", Math.max(0, (($(window).width() - obj.outerWidth()) / 2) + $(window).scrollLeft()) + "px");
+				$("#photos").show();
+			});
+		}
+
+		$("#photos").click(function(){
+			$(this).hide();
+		});
+
+        function viewPage(contentid){
+            var url = "http://api.visitkorea.or.kr/openapi/service/rest/KorService/detailCommon";
+            var queryParams = '?' + encodeURIComponent('ServiceKey') + '=' + serviceKey; /*Service Key*/
+			queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('100');
+			queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1');
+			queryParams += '&' + encodeURIComponent('MobileOS') + '=' + encodeURIComponent('ETC');
+			queryParams += '&' + encodeURIComponent('MobileApp') + '=' + encodeURIComponent('AppTest');
+			queryParams += '&' + encodeURIComponent('_type') + '=' + encodeURIComponent('json');
+			queryParams += '&' + encodeURIComponent('contentId') + '=' + encodeURIComponent(contentid);
+			queryParams += '&' + encodeURIComponent('defaultYN') + '=' + encodeURIComponent('Y');
+            $.getJSON(url + queryParams, function(res){
+                var page = res.response.body.items.item;
+                // console.log(page)
+                var pagelink = page.homepage
+                if( ! pagelink  ) {
+                    alert("홈페이지가 존재하지 않거나 맞지 않는 url입니다.")
+                    return;
+                };
+				var pageUrl = page.homepage;
+				if( pageUrl.indexOf("href") ) {  // pageUrl에서 href를 찾는다.
+					var tmpdiv  = document.createElement("div"); // tmpdiv에서 div를 생성하는 명령을 넣는다.
+					$(tmpdiv).html(pageUrl);	// tmpdiv에서 생성된 div에 pageUrl을 넣는다.
+					var tmpdir = $(tmpdiv).children("a").attr("href");	// tmpdir안에 있는 a태그의 href값을 받는다.
+					if( tmpdir ) pageUrl = tmpdir;	// temdir 있다면 pageUrl값을 tmpdir값으로 넣어라
+					console.log(tmpdiv);	// url확인용 console.log
+
+				}
+				pageUrl = pageUrl.replace(/(^\w+:|^)\/\//, ''); // http://가 있다면 없애라
+				pageUrl = "http://" + pageUrl;	// pageUrl에 http:// 추가하고 pageUrl에 재선언
+				//console.log(pageUrl);
+                window.open(pageUrl); // pageUrl을 새창으로 추가한다.
+            })
+        }
+	</script>
+</body>
+</html>
